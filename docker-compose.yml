@@ -1,20 +1,22 @@
-version: '3.9' # Aunque la advertencia dice que es obsoleto, especificar la versión puede ayudar a otros a entender la compatibilidad esperada.
+version: '3.8'
 
 services:
   zookeeper:
-    image: docker.io/bitnami/zookeeper:3 # Bitnami ofrece soporte multi-arquitectura, Docker debería elegir la versión ARM64 si está disponible.
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
+    image: bitnami/zookeeper:latest
+    platform: linux/arm64
     ports:
       - "2181:2181"
+    environment:
+      ALLOW_ANONYMOUS_LOGIN: "yes"
     healthcheck:
-      test: ["CMD", "sh", "-c", "echo stat | nc localhost 2181 | grep Mode"]
-      interval: 5s
+      test: ["CMD-SHELL", "echo ruok | timeout 2 bash -c 'cat > /dev/tcp/127.0.0.1/2181' || exit 1"]
+      interval: 10s
       timeout: 5s
-      retries: 3
+      retries: 5
 
   kafka:
-    image: confluentinc/cp-kafka:7.4.0 # Confluent proporciona imágenes multi-arquitectura, Docker debería elegir la versión ARM64 si está disponible.
+    image: bitnami/kafka:3.3.2
+    platform: linux/arm64
     depends_on:
       zookeeper:
         condition: service_healthy
@@ -22,47 +24,37 @@ services:
       - "9092:9092"
     environment:
       KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_CFG_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      ALLOW_PLAINTEXT_LISTENER: "yes"
     healthcheck:
-      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
+      test: ["CMD", "kafka-topics.sh", "--bootstrap-server", "localhost:9092", "--list"]
       interval: 10s
-      timeout: 5s
-      retries: 3
+      timeout: 10s
+      retries: 10
 
   connect:
-    image: confluentinc/cp-kafka-connect:7.4.0 # Confluent proporciona imágenes multi-arquitectura, Docker debería elegir la versión ARM64 si está disponible.
+    image: debezium/connect:2.7.3.Final
     depends_on:
       kafka:
         condition: service_healthy
     ports:
       - "8083:8083"
     environment:
-      CONNECT_BOOTSTRAP_SERVERS: kafka:9092
-      CONNECT_REST_PORT: 8083
-      CONNECT_GROUP_ID: kafka-connect-group
-      CONNECT_CONFIG_STORAGE_TOPIC: connect-configs
-      CONNECT_OFFSET_STORAGE_TOPIC: connect-offsets
-      CONNECT_STATUS_STORAGE_TOPIC: connect-status
-      CONNECT_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
-      CONNECT_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
-      CONNECT_INTERNAL_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
-      CONNECT_INTERNAL_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
-      CONNECT_LOG4J_LOGGERS: org.apache.kafka.connect.runtime.rest=WARN,org.reflections=ERROR
-      CONNECT_PLUGIN_PATH: /usr/share/java,/etc/kafka-connect/jars
+      BOOTSTRAP_SERVERS: kafka:9092
+      GROUP_ID: "connect-cluster"
+      CONFIG_STORAGE_TOPIC: "connect-config"
+      OFFSET_STORAGE_TOPIC: "connect-offsets"
+      STATUS_STORAGE_TOPIC: "connect-status"
+      KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      PLUGIN_PATH: /kafka/connectors
     volumes:
-      - ./jars:/etc/kafka-connect/jars
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8083/"]
-      interval: 5s
-      timeout: 5s
-      retries: 3
+      - ./plugins:/kafka/connectors
 
   db2:
-    image: icr.io/db2_community/db2:11.5.8.0 # Verificar si existe una imagen ARM64 oficial o alternativa para un mejor rendimiento.
+    image: icr.io/db2_community/db2:latest
     container_name: db2
     privileged: true
     ports:
@@ -72,50 +64,17 @@ services:
       DB2INST1_PASSWORD: password
       DBNAME: TESTDB
     volumes:
-      - ./scripts/db2:/db2-init
+      - ./scripts/db2:/db2-init:ro
     command: ["bash", "-c", "su - db2inst1 -c 'db2start && db2 -tf /db2-init/db2-init.sql && tail -f /dev/null'"]
     healthcheck:
       test: ["CMD", "db2", "top", "-n", "1"]
       interval: 10s
       timeout: 5s
       retries: 3
-
-  oracle:
-    image: gvenzl/oracle-free:23 # Verificar si existe una imagen ARM64 oficial o alternativa para un mejor rendimiento.
-    ports:
-      - "1521:1521"
-    environment:
-      ORACLE_PASSWORD: oracle
-    volumes:
-      - ./scripts/oracle:/container-entrypoint-initdb.d
-    healthcheck:
-      test: ["CMD", "sqlplus", "-S", "system/oracle@localhost:1521", "QUIT"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-
-  control-center:
-    image: confluentinc/cp-enterprise-control-center:7.4.0 # Confluent proporciona imágenes multi-arquitectura, Docker debería elegir la versión ARM64 si está disponible.
-    depends_on:
-      kafka:
-        condition: service_healthy
-      connect:
-        condition: service_healthy
-    ports:
-      - "9021:9021"
-    environment:
-      CONTROL_CENTER_BOOTSTRAP_SERVERS: kafka:9092
-      CONTROL_CENTER_CONNECT_CLUSTER: connect:8083
-      CONTROL_CENTER_KSQL_KSQLDB1_URL: http://ksqldb-server:8088
-      CONTROL_CENTER_KSQL_KSQLDB1_ADVERTISED_URL: http://localhost:8088
-      CONTROL_CENTER_SCHEMA_REGISTRY_URL: http://schema-registry:8081
-      CONTROL_CENTER_REPLICATION_FACTOR: 1
-      CONTROL_CENTER_INTERNAL_TOPICS_PARTITIONS: 1
-      CONTROL_CENTER_MONITORING_INTERCEPTOR_TOPIC_PARTITIONS: 1
-      CONFLUENT_METRICS_ENABLE: 'false'
-      PORT: 9021
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9021/"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
+    entrypoint: >
+      bash -c "
+        /var/db2_setup/lib/setup_db2_instance.sh &&
+        su - db2inst1 -c 'db2start' &&
+        su - db2inst1 -c 'db2 -tf /db2-init/db2-init.sql' &&
+        tail -f /dev/null
+      "
