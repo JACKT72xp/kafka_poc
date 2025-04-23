@@ -17,6 +17,7 @@ services:
   kafka:
     image: bitnami/kafka:3.3.2
     platform: linux/arm64
+    hostname: kafka
     depends_on:
       zookeeper:
         condition: service_healthy
@@ -35,12 +36,75 @@ services:
       retries: 10
 
   connect:
-    image: debezium/connect:2.7.3.Final
+    image: confluentinc/cp-kafka-connect:7.4.0
+    ports:
+      - "8083:8083"
     depends_on:
       kafka:
         condition: service_healthy
+    environment:
+      CONNECT_BOOTSTRAP_SERVERS: kafka:9092
+      CONNECT_REST_PORT: 8083
+      CONNECT_REST_ADVERTISED_HOST_NAME: connect
+      CONNECT_GROUP_ID: "connect-cluster"
+      CONNECT_CONFIG_STORAGE_TOPIC: "connect-config"
+      CONNECT_OFFSET_STORAGE_TOPIC: "connect-offsets"
+      CONNECT_STATUS_STORAGE_TOPIC: "connect-status"
+      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_KEY_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+      CONNECT_VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+      CONNECT_PLUGIN_PATH: "/usr/share/java,/kafka/connect"
+    volumes:
+      - ./plugins:/kafka/connect
+
+  db2:
+    image: icr.io/db2_community/db2:latest
+    container_name: db2
+    privileged: true
+    platform: linux/amd64
     ports:
-      - "8083:8083"
+      - "50000:50000"
+    environment:
+      LICENSE: accept
+      DB2INST1_PASSWORD: db2inst1-pwd
+      DB2INST1_USER: db2inst1
+      DBNAME: TESTDB
+    volumes:
+      - ./scripts/db2:/db2-init:ro
+
+  dbeaver:
+    image: dbeaver/cloudbeaver:ea
+    ports:
+      - "8085:8080"
+    environment:
+      - VNC_PASSWORD=password
+      - CB_USER=admin
+      - CB_PASSWORD=password
+      - CB_SERVER_PORT=8080
+      - CB_SERVER_HOST=localhost
+      - CB_SERVER_ADMIN_PASSWORD=password
+    volumes:
+      - ./cloudbeaver:/opt/cloudbeaver/workspace
+    depends_on:
+      - db2
+    networks:
+      - default
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8085"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  db2-connector:
+    image: debezium/connect:2.7.3.Final
+    platform: linux/arm64
+    depends_on:
+      connect:
+        condition: service_healthy
+    ports:
+      - "8084:8084"
     environment:
       BOOTSTRAP_SERVERS: kafka:9092
       GROUP_ID: "connect-cluster"
@@ -53,28 +117,12 @@ services:
     volumes:
       - ./plugins:/kafka/connectors
 
-  db2:
-    image: icr.io/db2_community/db2:latest
-    container_name: db2
-    privileged: true
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
     ports:
-      - "50000:50000"
+      - 8081:8080
     environment:
-      LICENSE: accept
-      DB2INST1_PASSWORD: password
-      DBNAME: TESTDB
-    volumes:
-      - ./scripts/db2:/db2-init:ro
-    command: ["bash", "-c", "su - db2inst1 -c 'db2start && db2 -tf /db2-init/db2-init.sql && tail -f /dev/null'"]
-    healthcheck:
-      test: ["CMD", "db2", "top", "-n", "1"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-    entrypoint: >
-      bash -c "
-        /var/db2_setup/lib/setup_db2_instance.sh &&
-        su - db2inst1 -c 'db2start' &&
-        su - db2inst1 -c 'db2 -tf /db2-init/db2-init.sql' &&
-        tail -f /dev/null
-      "
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
