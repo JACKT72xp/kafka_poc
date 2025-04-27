@@ -1,0 +1,22 @@
+{
+  "name": "db2-source-connector",
+  "config": {
+    "connector.class": "io.debezium.connector.db2.Db2Connector",
+    "tasks.max": "1",
+    "database.hostname": "db2",
+    "database.port": "50000",
+    "database.user": "db2inst1",
+    "database.password": "db2inst1-pwd",
+    "database.dbname": "TESTDB",
+    "database.server.name": "db2server",
+    "topic.prefix": "db2",
+    "table.include.list": "DEMO.CUSTOMERS",
+    "schema.history.internal.kafka.bootstrap.servers": "kafka:9092",
+    "schema.history.internal.kafka.topic": "schema-changes.db2",
+    "schema.history.internal.kafka.key.converter": "org.apache.kafka.connect.storage.StringConverter",
+    "schema.history.internal.kafka.value.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "schema.history.internal.kafka.value.converter.schemas.enable": "false",
+    "snapshot.mode": "initial",
+    "database.include.schema.changes": "true"
+  }
+}
