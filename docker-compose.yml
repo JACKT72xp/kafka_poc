@@ -34,6 +34,8 @@ services:
       interval: 10s
       timeout: 10s
       retries: 10
+    volumes:
+      - kafka-data:/bitnami/kafka
 
   connect:
     image: confluentinc/cp-kafka-connect:7.4.0
@@ -72,6 +74,7 @@ services:
       DB2INST1_USER: db2inst1
       DBNAME: TESTDB
     volumes:
+      - db2-data:/database/data
       - ./scripts/db2:/db2-init:ro
 
   dbeaver:
@@ -126,3 +129,28 @@ services:
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
       KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
       KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+
+  oracle:
+    image: gvenzl/oracle-xe:latest
+    container_name: oracle
+    platform: linux/amd64
+    ports:
+      - "1521:1521"
+      - "5500:5500"
+    environment:
+      ORACLE_PASSWORD: Oracle123
+      APP_USER: appuser
+      APP_USER_PASSWORD: appuser123
+    volumes:
+      - oracle-data:/opt/oracle/oradata
+    healthcheck:
+      test: ["CMD-SHELL", "echo 'SELECT 1 FROM dual;' | sqlplus -S sys/Oracle123@localhost:1521/XEPDB1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+
+volumes:
+  kafka-data:
+  db2-data:
+  oracle-data:
