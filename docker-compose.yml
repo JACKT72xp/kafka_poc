@@ -139,8 +139,6 @@ services:
       ORACLE_PASSWORD: Oracle123
       APP_USER: appuser
       APP_USER_PASSWORD: appuser123
-    volumes:
-      - oracle-data:/opt/oracle/oradata
     healthcheck:
       test: ["CMD-SHELL", "echo 'SELECT 1 FROM dual;' | sqlplus -S sys/Oracle123@localhost:1521/XEPDB1"]
       interval: 30s
