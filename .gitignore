@@ -9,11 +9,6 @@
 # Ignore Docker Compose override files
 docker-compose.override.yml
 
-# Ignore Cloudbeaver workspace data
-cloudbeaver/
-
-# Ignore plugins or connector temporary files
-plugins/
 
 # Ignore node_modules if in project
 node_modules/
