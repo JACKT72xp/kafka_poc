@@ -34,8 +34,6 @@ services:
       interval: 10s
       timeout: 10s
       retries: 10
-    volumes:
-      - kafka-data:/bitnami/kafka
 
   connect:
     image: confluentinc/cp-kafka-connect:7.4.0
@@ -74,7 +72,6 @@ services:
       DB2INST1_USER: db2inst1
       DBNAME: TESTDB
     volumes:
-      - db2-data:/database/data
       - ./scripts/db2:/db2-init:ro
 
   dbeaver:
@@ -130,6 +127,7 @@ services:
       KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
       KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
 
+
   oracle:
     image: gvenzl/oracle-xe:latest
     container_name: oracle
@@ -148,9 +146,3 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-
-
-volumes:
-  kafka-data:
-  db2-data:
-  oracle-data:
