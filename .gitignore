@@ -1,1 +1,50 @@
-cloudbeaver/.data/*
+# Ignore Docker-related files
+**/db2data/
+**/kafka-data/
+**/database/data/
+**/tmp/
+**/logs/
+**/*.log
+
+# Ignore Docker Compose override files
+docker-compose.override.yml
+
+# Ignore Cloudbeaver workspace data
+cloudbeaver/
+
+# Ignore plugins or connector temporary files
+plugins/
+
+# Ignore node_modules if in project
+node_modules/
+
+# Ignore Python cache if scripts exist
+__pycache__/
+*.pyc
+
+# Ignore environment files
+.env
+*.env
+
+# Ignore OS generated files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Icon?
+Desktop.ini
+
+# Ignore VScode settings
+.vscode/
+
+# Ignore Podman or Docker generated stuff
+*.pid
+*.sock
+
+# Ignore backups
+*.bak
+*.swp
+
+# Ignore generated SSL certificates if any
+certs/
+*.crt
+*.key

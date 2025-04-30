@@ -105,23 +105,24 @@ Busca `io.confluent.connect.jdbc.JdbcSourceConnector`.
 
 ```bash
 curl -X POST http://localhost:8083/connectors \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "db2-source-connector",
-    "config": {
-      "connector.class": "io.confluent.connect.jdbc.JdbcSourceConnector",
-      "connection.url": "jdbc:db2://db2:50000/TESTDB",
-      "connection.user": "db2inst1",
-      "connection.password": "db2inst1-pwd",
-      "table.whitelist": "DEMO.CUSTOMERS",
-      "mode": "timestamp+incrementing",
-      "timestamp.column.name": "CREATED_AT",
-      "incrementing.column.name": "ID",
-      "topic.prefix": "db2-",
-      "poll.interval.ms": 5000,
-      "tasks.max": "1"
-    }
-  }'
+-H "Content-Type: application/json" \
+-d '{
+  "name": "db2-source-connector",
+  "config": {
+    "connector.class": "io.confluent.connect.jdbc.JdbcSourceConnector",
+    "tasks.max": "1",
+    "connection.url": "jdbc:db2://db2:50000/TESTDB",
+    "connection.user": "db2inst1",
+    "connection.password": "db2inst1-pwd",
+    "table.whitelist": "DEMO.CUSTOMERS",
+    "mode": "timestamp+incrementing",
+    "timestamp.column.name": "CREATED_AT",
+    "incrementing.column.name": "ID",
+    "poll.interval.ms": "5000",
+    "topic.prefix": "db2-",
+    "validate.non.null": "false"
+  }
+}'
 ```
 
 ### 3. Verificar estado del conector:
