@@ -1,0 +1,40 @@
+{
+	"folders": {},
+	"connections": {
+		"db2-1969006c8dd-14981f0f17fc33e": {
+			"provider": "db2",
+			"driver": "db2",
+			"name": "Db2 for LUW@db2",
+			"save-password": true,
+			"configuration": {
+				"host": "db2",
+				"port": "50000",
+				"database": "TESTDB",
+				"url": "jdbc:db2://db2:50000/TESTDB",
+				"configurationType": "MANUAL",
+				"type": "dev",
+				"closeIdleConnection": true,
+				"auth-model": "native",
+				"bootstrap": {
+					"autocommit": true
+				}
+			}
+		}
+	},
+	"connection-types": {
+		"dev": {
+			"name": "Development",
+			"color": "255,255,255",
+			"description": "Regular development database",
+			"auto-commit": true,
+			"confirm-execute": false,
+			"confirm-data-change": false,
+			"smart-commit": false,
+			"smart-commit-recover": true,
+			"auto-close-transactions": true,
+			"close-transactions-period": 1800,
+			"auto-close-connections": true,
+			"close-connections-period": 14400
+		}
+	}
+}

@@ -1,21 +1,31 @@
-version: '3.8'
+version: "3.8"
 
 services:
   zookeeper:
-    image: bitnami/zookeeper:latest
+    networks:
+      - my_network
+    image: bitnami/zookeeper:3.6.3
     platform: linux/amd64
     ports:
       - "2181:2181"
     environment:
       ALLOW_ANONYMOUS_LOGIN: "yes"
     healthcheck:
-      test: ["CMD-SHELL", "echo ruok | timeout 2 bash -c 'cat > /dev/tcp/127.0.0.1/2181' || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          "echo ruok | timeout 2 bash -c 'cat > /dev/tcp/127.0.0.1/2181' || exit 1",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
+    volumes:
+      - zookeeper_data:/opt/bitnami
 
   kafka:
-    image: bitnami/kafka:3.3.2
+    networks:
+      - my_network
+    image: bitnami/kafka:3.1.0
     platform: linux/amd64
     hostname: kafka
     depends_on:
@@ -29,37 +39,60 @@ services:
       KAFKA_CFG_LISTENERS: PLAINTEXT://:9092
       KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       ALLOW_PLAINTEXT_LISTENER: "yes"
+
     healthcheck:
-      test: ["CMD", "kafka-topics.sh", "--bootstrap-server", "localhost:9092", "--list"]
+      test:
+        [
+          "CMD",
+          "kafka-topics.sh",
+          "--bootstrap-server",
+          "localhost:9092",
+          "--list",
+        ]
       interval: 10s
       timeout: 10s
       retries: 10
+    volumes:
+      - kafka_data:/opt/bitnami
+      - ./containersconfig/scripts/kafka:/init_topic
+    command:
+      [
+        "bash",
+        "-c",
+        "/init_topic/init-topic.sh & /opt/bitnami/scripts/kafka/run.sh",
+      ]
 
   connect:
-    image: confluentinc/cp-kafka-connect:7.4.0
+    networks:
+      - my_network
+    image: debezium/connect:2.7.3.Final
+    platform: linux/amd64
     ports:
       - "8083:8083"
     depends_on:
-      kafka:
-        condition: service_healthy
+      - kafka # <--- Sin condition
     environment:
-      CONNECT_BOOTSTRAP_SERVERS: kafka:9092
-      CONNECT_REST_PORT: 8083
-      CONNECT_REST_ADVERTISED_HOST_NAME: connect
-      CONNECT_GROUP_ID: "connect-cluster"
-      CONNECT_CONFIG_STORAGE_TOPIC: "connect-config"
-      CONNECT_OFFSET_STORAGE_TOPIC: "connect-offsets"
-      CONNECT_STATUS_STORAGE_TOPIC: "connect-status"
-      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 1
-      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 1
-      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
-      CONNECT_KEY_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
-      CONNECT_VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
-      CONNECT_PLUGIN_PATH: "/usr/share/java,/kafka/connect"
+      BOOTSTRAP_SERVERS: kafka:9092
+      GROUP_ID: "connect-cluster"
+      CONFIG_STORAGE_TOPIC: "connect-config"
+      OFFSET_STORAGE_TOPIC: "connect-offsets"
+      STATUS_STORAGE_TOPIC: "connect-status"
+      KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      PLUGIN_PATH: /kafka/connect
+      CLASSPATH: /kafka/connect/debezium-connector-db2/db2jcc4.jar
+      JAVA_TOOL_OPTIONS: "-Djava.library.path=/kafka/connect/debezium-connector-db2"
     volumes:
-      - ./plugins:/kafka/connect
+      - ./containersconfig/plugins:/kafka/connect
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   db2:
+    networks:
+      - my_network
     image: icr.io/db2_community/db2:latest
     container_name: db2
     privileged: true
@@ -72,32 +105,37 @@ services:
       DB2INST1_USER: db2inst1
       DBNAME: TESTDB
     volumes:
-      - ./scripts/db2:/db2-init:ro
+      - ./containersconfig/scripts/db2/db2_init_database:/init-db2:ro
+      - db2data:/database/data
+      - db2_tmp:/tmp
+      - ./containersconfig/scripts/db2/db2_init_container:/var/custom
 
   dbeaver:
+    networks:
+      - my_network
     image: dbeaver/cloudbeaver:ea
     ports:
-      - "8085:8978"
+      - "8085:8978" # <-- ¡Cambia el 8080 por 8978!
     environment:
       - VNC_PASSWORD=password
       - CB_USER=admin
       - CB_PASSWORD=password
-      - CB_SERVER_PORT=8978
-      - CB_SERVER_HOST=localhost
+      - CB_SERVER_PORT=8978 # <-- Cambiar también aquí
+      - CB_SERVER_HOST=0.0.0.0
       - CB_SERVER_ADMIN_PASSWORD=password
     volumes:
-      - ./cloudbeaver:/opt/cloudbeaver/workspace
+      - ./containersconfig/cloudbeaver:/opt/cloudbeaver/workspace
     depends_on:
       - db2
-    networks:
-      - default
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8085"]
+      test: ["CMD", "curl", "-f", "http://localhost:8085/status"]
       interval: 30s
       timeout: 10s
       retries: 5
 
   db2-connector:
+    networks:
+      - my_network
     image: debezium/connect:2.7.3.Final
     platform: linux/amd64
     depends_on:
@@ -114,10 +152,13 @@ services:
       KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
       VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
       PLUGIN_PATH: /kafka/connectors
+      CLASSPATH: /kafka/connectors/debezium-connector-db2/db2jcc4.jar
+      JAVA_TOOL_OPTIONS: "-Djava.library.path=/kafka/connectors/debezium-connector-db2"
     volumes:
-      - ./plugins:/kafka/connectors
-
+      - ./containersconfig/plugins:/kafka/connectors
   kafka-ui:
+    networks:
+      - my_network
     image: provectuslabs/kafka-ui:latest
     ports:
       - 8081:8080
@@ -127,20 +168,12 @@ services:
       KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
       KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
 
+volumes:
+  db2data:
+  db2_tmp:
+  kafka_data:
+  zookeeper_data:
 
-  oracle:
-    image: gvenzl/oracle-xe:latest
-    container_name: oracle
-    platform: linux/amd64
-    ports:
-      - "1521:1521"
-      - "5500:5500"
-    environment:
-      ORACLE_PASSWORD: Oracle123
-      APP_USER: appuser
-      APP_USER_PASSWORD: appuser123
-    healthcheck:
-      test: ["CMD-SHELL", "echo 'SELECT 1 FROM dual;' | sqlplus -S sys/Oracle123@localhost:1521/XEPDB1"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
+networks:
+  my_network:
+    driver: bridge
