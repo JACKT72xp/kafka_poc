@@ -62,115 +62,107 @@ services:
         "/init_topic/init-topic.sh & /opt/bitnami/scripts/kafka/run.sh",
       ]
 
-  connect:
-    networks:
-      - my_network
-    image: debezium/connect:2.7.3.Final
-    platform: linux/amd64
-    ports:
-      - "8083:8083"
-    depends_on:
-      - kafka # <--- Sin condition
-    environment:
-      BOOTSTRAP_SERVERS: kafka:9092
-      GROUP_ID: "connect-cluster"
-      CONFIG_STORAGE_TOPIC: "connect-config"
-      OFFSET_STORAGE_TOPIC: "connect-offsets"
-      STATUS_STORAGE_TOPIC: "connect-status"
-      KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
-      VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
-      PLUGIN_PATH: /kafka/connect
-      CLASSPATH: /kafka/connect/debezium-connector-db2/db2jcc4.jar
-      JAVA_TOOL_OPTIONS: "-Djava.library.path=/kafka/connect/debezium-connector-db2"
-    volumes:
-      - ./containersconfig/plugins:/kafka/connect
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8083/"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+  # connect:
+  #   networks:
+  #     - my_network
+  #   image: debezium/connect:2.7.3.Final
+  #   platform: linux/amd64
+  #   ports:
+  #     - "8083:8083"
+  #   depends_on:
+  #     - kafka # <--- Sin condition
+  #   environment:
+  #     BOOTSTRAP_SERVERS: kafka:9092
+  #     GROUP_ID: "connect-cluster"
+  #     CONFIG_STORAGE_TOPIC: "connect-config"
+  #     OFFSET_STORAGE_TOPIC: "connect-offsets"
+  #     STATUS_STORAGE_TOPIC: "connect-status"
+  #     KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+  #     VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+  #     PLUGIN_PATH: /kafka/connect
+  #     CLASSPATH: /kafka/connect/debezium-connector-db2/db2jcc4.jar
+  #     JAVA_TOOL_OPTIONS: "-Djava.library.path=/kafka/connect/debezium-connector-db2"
+  #   volumes:
+  #     - ./containersconfig/plugins:/kafka/connect
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:8083/"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
 
-  db2:
-    networks:
-      - my_network
-    image: icr.io/db2_community/db2:latest
-    container_name: db2
-    privileged: true
-    platform: linux/amd64
-    ports:
-      - "50000:50000"
-    environment:
-      LICENSE: accept
-      DB2INST1_PASSWORD: db2inst1-pwd
-      DB2INST1_USER: db2inst1
-      DBNAME: TESTDB
-    volumes:
-      - ./containersconfig/scripts/db2/db2_init_database:/init-db2:ro
-      - db2data:/database/data
-      - db2_tmp:/tmp
-      - ./containersconfig/scripts/db2/db2_init_container:/var/custom
+  # db2-connector:
+  #   networks:
+  #     - my_network
+  #   image: debezium/connect:2.7.3.Final
+  #   platform: linux/amd64
+  #   depends_on:
+  #     connect:
+  #       condition: service_healthy
+  #   ports:
+  #     - "8084:8084"
+  #   environment:
+  #     BOOTSTRAP_SERVERS: kafka:9092
+  #     GROUP_ID: "connect-cluster"
+  #     CONFIG_STORAGE_TOPIC: "connect-config"
+  #     OFFSET_STORAGE_TOPIC: "connect-offsets"
+  #     STATUS_STORAGE_TOPIC: "connect-status"
+  #     KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+  #     VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+  #     PLUGIN_PATH: /kafka/connectors
+  #     CLASSPATH: /kafka/connectors/debezium-connector-db2/db2jcc4.jar
+  #     JAVA_TOOL_OPTIONS: "-Djava.library.path=/kafka/connectors/debezium-connector-db2"
+  #   volumes:
+  #     - ./containersconfig/plugins:/kafka/connectors
+  # kafka-ui:
+  #   networks:
+  #     - my_network
+  #   image: provectuslabs/kafka-ui:latest
+  #   ports:
+  #     - 8081:8080
+  #   environment:
+  #     KAFKA_CLUSTERS_0_NAME: local
+  #     KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+  #     KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+  #     KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
 
-  dbeaver:
-    networks:
-      - my_network
-    image: dbeaver/cloudbeaver:ea
-    ports:
-      - "8085:8978" # <-- ¡Cambia el 8080 por 8978!
-    environment:
-      - VNC_PASSWORD=password
-      - CB_USER=admin
-      - CB_PASSWORD=password
-      - CB_SERVER_PORT=8978 # <-- Cambiar también aquí
-      - CB_SERVER_HOST=0.0.0.0
-      - CB_SERVER_ADMIN_PASSWORD=password
-    volumes:
-      - ./containersconfig/cloudbeaver:/opt/cloudbeaver/workspace
-    depends_on:
-      - db2
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8085/status"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
+  # microservice-consumer:
+  #   networks:
+  #     - my_network
+  #   image: debian:latest
+  #   ports:
+  #     - "8086:8080"
+  #   volumes:
+  #     - ./microservice_consumer:/app
+  #   command: >
+  #     bash -c "apt update && tail -f /dev/null"
 
-  db2-connector:
-    networks:
-      - my_network
-    image: debezium/connect:2.7.3.Final
-    platform: linux/amd64
+  microservice-consumer:
+    build:
+      context: ./microservice_consumer
+    ports:
+      - "8089:8080"
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: 10.89.0.8:9092 #10.89.0.8:9092
     depends_on:
-      connect:
-        condition: service_healthy
-    ports:
-      - "8084:8084"
-    environment:
-      BOOTSTRAP_SERVERS: kafka:9092
-      GROUP_ID: "connect-cluster"
-      CONFIG_STORAGE_TOPIC: "connect-config"
-      OFFSET_STORAGE_TOPIC: "connect-offsets"
-      STATUS_STORAGE_TOPIC: "connect-status"
-      KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
-      VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
-      PLUGIN_PATH: /kafka/connectors
-      CLASSPATH: /kafka/connectors/debezium-connector-db2/db2jcc4.jar
-      JAVA_TOOL_OPTIONS: "-Djava.library.path=/kafka/connectors/debezium-connector-db2"
-    volumes:
-      - ./containersconfig/plugins:/kafka/connectors
-  kafka-ui:
+      - kafka
     networks:
       - my_network
-    image: provectuslabs/kafka-ui:latest
+
+  microservice-producer:
+    build:
+      context: ./microservice_producer
     ports:
-      - 8081:8080
+      - "8088:8080"
     environment:
-      KAFKA_CLUSTERS_0_NAME: local
-      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
-      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
-      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_BOOTSTRAP_SERVERS: 10.89.0.8:9092 #10.89.0.8:9092
+    depends_on:
+      - kafka
+    networks:
+      - my_network
 
 volumes:
-  db2data:
-  db2_tmp:
+  # db2data:
+  # db2_tmp:
   kafka_data:
   zookeeper_data:
 
