@@ -1,0 +1,31 @@
+spring:
+  kafka:
+    bootstrap-servers: kafka:9092
+    consumer:
+      key-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      spring-deserializer-key-delegate-class: org.apache.kafka.common.serialization.StringDeserializer
+      spring-deserializer-value-delegate-class: org.springframework.kafka.support.serializer.JsonDeserializer
+      isolation-level: read_committed
+      group-id: xjulius-group
+      properties:
+        spring.json.value.default.type: com.caixabank.absis.apps.dataservice.poc.fastdata.domain.value.ValueSchema
+        use.type.headers: false
+
+    producer:
+      properties:
+        spring.json.value.default.type: com.caixabank.absis.apps.dataservice.poc.fastdata.domain.value.ValueSchema
+        use.type.headers: false
+
+    replication-factor: 1
+    application-id: test-xjulius
+  json:
+    value:
+      default:
+        type: com.caixabank.absis.apps.dataservice.poc.fastdata.domain.value.ValueSchema
+input-topic:
+  prefix: test-mysql-jdbc-(.*)
+  tables: test-topic
+
+output-topic:
+  prefix: test-sqlite-jdbc-transform-(.*)
