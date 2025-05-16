@@ -175,8 +175,8 @@ services:
     environment:
       ORACLE_PASSWORD: oracle          
     volumes:
-      - ./scripts/oracle:/oracle  
-      - ./scripts/oracle:/container-entrypoint-startdb.d
+      - ./containersconfig/scripts/oracle:/oracle  
+      - ./containersconfig/scripts/oracle:/container-entrypoint-startdb.d
     networks:
       - my_network
 
