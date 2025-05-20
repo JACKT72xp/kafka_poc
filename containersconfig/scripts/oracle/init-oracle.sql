@@ -4,14 +4,14 @@ CREATE TABLE expedientes (
     fecha_contratacion DATE NOT NULL,
     titular VARCHAR2(255) NOT NULL,
     numero_expediente VARCHAR2(50) NOT NULL UNIQUE,
-    fecha_ultima_modificacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+    chgmarker TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 CREATE OR REPLACE TRIGGER trg_update_expedientes
 BEFORE UPDATE OF fecha_contratacion, titular, numero_expediente ON expedientes
 FOR EACH ROW
 BEGIN
-    :NEW.fecha_ultima_modificacion := CURRENT_TIMESTAMP;
+    :NEW.chgmarker := CURRENT_TIMESTAMP;
 END;
 /
 
@@ -22,14 +22,14 @@ CREATE TABLE fondos (
     tipo_fondo VARCHAR2(50) NOT NULL,
     fecha_creacion_fondo DATE NOT NULL,
     volumen_activos NUMBER(20,2) NOT NULL,
-    fecha_ultima_modificacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+    chgmarker TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 CREATE OR REPLACE TRIGGER trg_update_fondos
 BEFORE UPDATE OF nombre_fondo, tipo_fondo, fecha_creacion_fondo, volumen_activos ON fondos
 FOR EACH ROW
 BEGIN
-    :NEW.fecha_ultima_modificacion := CURRENT_TIMESTAMP;
+    :NEW.chgmarker := CURRENT_TIMESTAMP;
 END;
 /
 
@@ -43,7 +43,7 @@ CREATE TABLE ordenes (
     fecha_ejecucion DATE NOT NULL,
     importe NUMBER(20,2) NOT NULL,
     id_fondo NUMBER NOT NULL,
-    fecha_ultima_modificacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    chgmarker TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     CONSTRAINT fk_ordenes_expediente FOREIGN KEY (id_expediente) REFERENCES expedientes(id) ON DELETE CASCADE,
     CONSTRAINT fk_ordenes_fondo FOREIGN KEY (id_fondo) REFERENCES fondos(id) ON DELETE CASCADE
 );
@@ -52,7 +52,7 @@ CREATE OR REPLACE TRIGGER trg_update_ordenes
 BEFORE UPDATE OF id_expediente, fecha_orden, estado, tipo_orden, fecha_ejecucion, importe, id_fondo ON ordenes
 FOR EACH ROW
 BEGIN
-    :NEW.fecha_ultima_modificacion := CURRENT_TIMESTAMP;
+    :NEW.chgmarker := CURRENT_TIMESTAMP;
 END;
 /
 
@@ -64,7 +64,7 @@ CREATE TABLE traspasos (
     id_fondo_destino NUMBER NOT NULL,
     fecha DATE NOT NULL,
     importe NUMBER(20,2) NOT NULL,
-    fecha_ultima_modificacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    chgmarker TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     CONSTRAINT fk_traspasos_expediente FOREIGN KEY (id_expediente) REFERENCES expedientes(id) ON DELETE CASCADE,
     CONSTRAINT fk_traspasos_origen FOREIGN KEY (id_fondo_origen) REFERENCES fondos(id) ON DELETE CASCADE,
     CONSTRAINT fk_traspasos_destino FOREIGN KEY (id_fondo_destino) REFERENCES fondos(id) ON DELETE CASCADE
@@ -74,7 +74,7 @@ CREATE OR REPLACE TRIGGER trg_update_traspasos
 BEFORE UPDATE OF id_expediente, id_fondo_origen, id_fondo_destino, fecha, importe ON traspasos
 FOR EACH ROW
 BEGIN
-    :NEW.fecha_ultima_modificacion := CURRENT_TIMESTAMP;
+    :NEW.chgmarker := CURRENT_TIMESTAMP;
 END;
 /
 
@@ -85,7 +85,7 @@ CREATE TABLE retenciones (
     fecha_retencion DATE NOT NULL,
     tipo VARCHAR2(50) NOT NULL,
     importe_retencion NUMBER(20,2) NOT NULL,
-    fecha_ultima_modificacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    chgmarker TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     CONSTRAINT fk_retenciones_expediente FOREIGN KEY (id_expediente) REFERENCES expedientes(id) ON DELETE CASCADE
 );
 
@@ -93,7 +93,7 @@ CREATE OR REPLACE TRIGGER trg_update_retenciones
 BEFORE UPDATE OF id_expediente, fecha_retencion, tipo, importe_retencion ON retenciones
 FOR EACH ROW
 BEGIN
-    :NEW.fecha_ultima_modificacion := CURRENT_TIMESTAMP;
+    :NEW.chgmarker := CURRENT_TIMESTAMP;
 END;
 /
 
@@ -127,7 +127,7 @@ CREATE TABLE contratos_parte_a (
     fecha_vencimiento_contrato DATE NOT NULL,
     condiciones_contrato VARCHAR2(50) NOT NULL,
     terminos_pago VARCHAR2(50) NOT NULL,
-    fecha_ultima_modificacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+    chgmarker TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 -- Table: contratos_parte_b
@@ -138,7 +138,7 @@ CREATE TABLE contratos_parte_b (
     fecha_vencimiento_contrato DATE NOT NULL,
     condiciones_contrato VARCHAR2(50) NOT NULL,
     terminos_pago VARCHAR2(50) NOT NULL,
-    fecha_ultima_modificacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+    chgmarker TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 

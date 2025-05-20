@@ -4,6 +4,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
+
+
+
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,12 +42,11 @@ public class ProducerTraspasosService implements CommandLineRunner{
 
 	private void producirMensajes(){
 		while (true) {
-			//System.out.println("Producing messages...");
+			System.out.println("Producing messages...");
 			try {
 				Random random = new Random();
 				int randomInt = random.nextInt(100);
 				String message = "Hello World: " + randomInt;
-				System.out.println(message);
 				send(message);
 				Thread.sleep(3000);
 			} catch (InterruptedException e) {
