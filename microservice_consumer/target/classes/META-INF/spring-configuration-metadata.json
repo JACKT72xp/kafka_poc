@@ -1,0 +1,22 @@
+{
+  "groups": [
+    {
+      "name": "input-topic",
+      "type": "com.caixabank.absis.apps.dataservice.poc.fastdata.config.ConsumerConfigurationProperties",
+      "sourceType": "com.caixabank.absis.apps.dataservice.poc.fastdata.config.ConsumerConfigurationProperties"
+    }
+  ],
+  "properties": [
+    {
+      "name": "input-topic.prefix",
+      "type": "java.lang.String",
+      "sourceType": "com.caixabank.absis.apps.dataservice.poc.fastdata.config.ConsumerConfigurationProperties"
+    },
+    {
+      "name": "input-topic.tables",
+      "type": "java.util.List<java.lang.String>",
+      "sourceType": "com.caixabank.absis.apps.dataservice.poc.fastdata.config.ConsumerConfigurationProperties"
+    }
+  ],
+  "hints": []
+}

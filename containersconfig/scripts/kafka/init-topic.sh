@@ -6,6 +6,21 @@ done
  
  
 # Crear topic
-echo "Creando topic..."
+echo "Creando topics..."
 kafka-topics.sh --create --if-not-exists --bootstrap-server kafka:9092 --replication-factor 1 --partitions 2 --topic test-topic
- 
+kafka-topics.sh --create --if-not-exists --bootstrap-server kafka:9092 --replication-factor 1 --partitions 2 --topic test-db2-jdbc-EXPEDIENTES
+kafka-topics.sh --create --if-not-exists --bootstrap-server kafka:9092 --replication-factor 1 --partitions 2 --topic test-db2-jdbc-FONDOS
+kafka-topics.sh --create --if-not-exists --bootstrap-server kafka:9092 --replication-factor 1 --partitions 2 --topic test-db2-jdbc-ORDENES
+kafka-topics.sh --create --if-not-exists --bootstrap-server kafka:9092 --replication-factor 1 --partitions 2 --topic test-db2-jdbc-RETENCIONES
+
+
+
+
+
+
+
+
+
+
+
+
