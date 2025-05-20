@@ -1,0 +1,52 @@
+spring:
+  kafka:
+    bootstrap-servers: kafka:9092
+    consumer:
+      key-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      spring-deserializer-key-delegate-class: org.apache.kafka.common.serialization.StringDeserializer
+      spring-deserializer-value-delegate-class: org.springframework.kafka.support.serializer.JsonDeserializer
+      isolation-level: read_committed
+      group-id: xjulius-group
+      properties:
+        spring.json.value.default.type: com.caixabank.absis.apps.dataservice.poc.fastdata.domain.value.ValueSchema
+        use.type.headers: false
+
+    producer:
+      properties:
+        spring.json.value.default.type: com.caixabank.absis.apps.dataservice.poc.fastdata.domain.value.ValueSchema
+        use.type.headers: false
+
+    replication-factor: 1
+    application-id: test-xjulius
+  json:
+    value:
+      default:
+        type: com.caixabank.absis.apps.dataservice.poc.fastdata.domain.value.ValueSchema
+
+rules-configuration:
+  input-topic-prefix: test-mysql-jdbc-(.*)
+  output-topic-prefix: test-sqlite-jdbc-transform-(.*)
+  main-table: ordenes
+  rules:
+    - name: ORDENES_EXPEDIENTES
+      childTable: ordenes
+      parentTable: expedientes
+      columnName: id_expediente
+      columnPk: id
+      type: parent
+      position: 0
+    - name: ORDENES_FONDOS
+      childTable: ordenes
+      parentTable: fondos
+      columnName: id_fondo
+      columnPk: id
+      type: parent
+      position: 1
+    - name: RETENCIONES_ORDENES
+      childTable: retenciones
+      parentTable: ordenes
+      columnName: id
+      columnPk: id_orden
+      type: child
+      position: 2
