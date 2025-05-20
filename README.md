@@ -107,21 +107,48 @@ Busca `io.confluent.connect.jdbc.JdbcSourceConnector`.
 curl -X POST http://localhost:8083/connectors \
   -H "Content-Type: application/json" \
   -d '{
-    "name": "db2-source-connector",
+    "name": "test-source-CU-db2-jdbc-autoincrement",
     "config": {
-      "connector.class": "io.confluent.connect.jdbc.JdbcSourceConnector",
-      "connection.url": "jdbc:db2://db2:50000/TESTDB",
-      "connection.user": "db2inst1",
-      "connection.password": "db2inst1-pwd",
-      "table.whitelist": "DEMO.CUSTOMERS",
-      "mode": "timestamp+incrementing",
-      "timestamp.column.name": "CREATED_AT",
-      "incrementing.column.name": "ID",
-      "topic.prefix": "db2-",
-      "poll.interval.ms": 5000,
-      "tasks.max": "1"
+        "bootstrap.servers": "kafka:9092",
+        "key.converter": "org.apache.kafka.connect.json.JsonConverter",
+        "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+        "key.converter.schemas.enable": "true",
+        "value.converter.schemas.enable": true,
+        "offset.storage.file.filename": "/tmp/connect.offsets",
+        "offset.flush.interval.ms": 10000,
+        "plugin.path": "/kafka/connectors",
+        "listeners": "http://0.0.0.0:9092",
+        "connector.class": "io.confluent.connect.jdbc.JdbcSourceConnector",
+        "tasks.max": "1",
+        "connection.url": "jdbc:db2://db2:50000/TESTDB",
+        "connection.user": "db2inst1",
+        "connection.password": "db2inst1-pwd",
+        "dialect.name": "Db2DatabaseDialect",
+        "mode": "timestamp+incrementing",
+        "incrementing.column.name": "ID",
+        "timestamp.column.name": "CHGMARKER",
+        "topic.prefix": "test-db2-jdbc-",
+        "timestamp.delay.interval.ms": 500,
+        "poll.interval.ms": 1000,
+        "validate.non.null": false,
+        "decimal.format": "NUMERIC",
+        "table.types": "TABLE,VIEW",
+        "transforms": "InsertKey,ExtractId",
+        "transforms.InsertKey.type": "org.apache.kafka.connect.transforms.ValueToKey",
+        "transforms.InsertKey.fields": "ID",
+        "transforms.ExtractId.type": "org.apache.kafka.connect.transforms.ExtractField$Key",
+        "transforms.ExtractId.field": "ID",
+        "schema.pattern=DB2INST1": "DB2INST1",
+        "table.whitelist": "DB2INST1.EXPEDIENTES,DB2INST1.FONDOS,DB2INST1.ORDENES,DB2INST1.RETENCIONES"
     }
-  }'
+}'
+```
+
+En el contenedor del conector db2 vale con hacer:
+(Es necesario esperar a que se cree la base de datos db2)
+
+```bash
+curl -X POST -H "Content-Type: application/json" --data @/connector_config/db2_connector_config.json http://localhost:8083/connectors
 ```
 
 ### 3. Verificar estado del conector:
