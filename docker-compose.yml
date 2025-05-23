@@ -230,7 +230,8 @@ volumes:
   db2_tmp:
   kafka_data:
   zookeeper_data:
-
+  oracle-data:
+  
 networks:
   my_network:
     driver: bridge
