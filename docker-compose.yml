@@ -1,5 +1,5 @@
-version: "3.8"
 
+version: "3.8" 
 services:
   zookeeper:
     networks:
@@ -21,7 +21,7 @@ services:
       retries: 5
     volumes:
       - zookeeper_data:/opt/bitnami
-
+ 
   kafka:
     networks:
       - my_network
@@ -38,8 +38,7 @@ services:
       KAFKA_CFG_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_CFG_LISTENERS: PLAINTEXT://:9092
       KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
-      ALLOW_PLAINTEXT_LISTENER: "yes"
-
+      ALLOW_PLAINTEXT_LISTENER: "yes" 
     healthcheck:
       test:
         [
@@ -61,7 +60,7 @@ services:
         "-c",
         "/init_topic/init-topic.sh & /opt/bitnami/scripts/kafka/run.sh",
       ]
-
+ 
   db2:
     networks:
       - my_network
@@ -81,7 +80,7 @@ services:
       - db2data:/database/data
       - db2_tmp:/tmp
       - ./containersconfig/scripts/db2/db2_init_container:/var/custom
-
+ 
   dbeaver:
     networks:
       - my_network
@@ -103,36 +102,35 @@ services:
       test: ["CMD", "curl", "-f", "http://localhost:8085/status"]
       interval: 30s
       timeout: 10s
+      retries: 5 
+  connect:
+    networks:
+      - my_network
+    image: debezium/connect:2.7.3.Final
+    platform: linux/amd64
+    ports:
+      - "8083:8083"
+    depends_on:
+      - kafka # <--- Sin condition
+    environment:
+      BOOTSTRAP_SERVERS: kafka:9092
+      GROUP_ID: "connect-cluster"
+      CONFIG_STORAGE_TOPIC: "connect-config"
+      OFFSET_STORAGE_TOPIC: "connect-offsets"
+      STATUS_STORAGE_TOPIC: "connect-status"
+      KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      PLUGIN_PATH: /kafka/connect
+      CLASSPATH: /kafka/connect/debezium-connector-db2/db2jcc4.jar
+      JAVA_TOOL_OPTIONS: "-Djava.library.path=/kafka/connect/debezium-connector-db2"
+    volumes:
+      - ./containersconfig/plugins:/kafka/connect
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/"]
+      interval: 10s
+      timeout: 5s
       retries: 5
-
-  # connect:
-  #   networks:
-  #     - my_network
-  #   image: debezium/connect:2.7.3.Final
-  #   platform: linux/amd64
-  #   ports:
-  #     - "8083:8083"
-  #   depends_on:
-  #     - kafka # <--- Sin condition
-  #   environment:
-  #     BOOTSTRAP_SERVERS: kafka:9092
-  #     GROUP_ID: "connect-cluster"
-  #     CONFIG_STORAGE_TOPIC: "connect-config"
-  #     OFFSET_STORAGE_TOPIC: "connect-offsets"
-  #     STATUS_STORAGE_TOPIC: "connect-status"
-  #     KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
-  #     VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
-  #     PLUGIN_PATH: /kafka/connect
-  #     CLASSPATH: /kafka/connect/debezium-connector-db2/db2jcc4.jar
-  #     JAVA_TOOL_OPTIONS: "-Djava.library.path=/kafka/connect/debezium-connector-db2"
-  #   volumes:
-  #     - ./containersconfig/plugins:/kafka/connect
-  #   healthcheck:
-  #     test: ["CMD", "curl", "-f", "http://localhost:8083/"]
-  #     interval: 10s
-  #     timeout: 5s
-  #     retries: 5
-
+ 
   # db2-connector:
   #   networks:
   #     - my_network
@@ -154,9 +152,11 @@ services:
   #     PLUGIN_PATH: /kafka/connectors
   #     CLASSPATH: /kafka/connectors/debezium-connector-db2/db2jcc4.jar
   #     JAVA_TOOL_OPTIONS: "-Djava.library.path=/kafka/connectors/debezium-connector-db2"
+
   #   volumes:
   #     - ./containersconfig/plugins:/kafka/connectors
   #     - ./containersconfig/scripts/db2/db2_connector_config:/connector_config
+
   kafka-ui:
     networks:
       - my_network
@@ -167,8 +167,7 @@ services:
       KAFKA_CLUSTERS_0_NAME: local
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
       KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
-      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
-
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092 
   oracle:
     image: gvenzl/oracle-xe:latest
     container_name: oracle
@@ -187,8 +186,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-
-
+ 
   # microservice-consumer:
   #   build:
   #     context: ./microservice_consumer
@@ -199,7 +197,7 @@ services:
   #   depends_on:
   #     - kafka
   #   networks:
-  #     - my_network
+  #     - my_network 
 
   # microservice-producer:
   #   build:
@@ -224,14 +222,14 @@ services:
   #     - kafka
   #   networks:
   #     - my_network
-
+ 
 volumes:
   db2data:
   db2_tmp:
   kafka_data:
   zookeeper_data:
   oracle-data:
-  
+
 networks:
   my_network:
     driver: bridge
