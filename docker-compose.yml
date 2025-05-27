@@ -176,8 +176,8 @@ services:
       - "5500:5500"
     environment:
       ORACLE_PASSWORD: Oracle123
-      APP_USER: appuser
-      APP_USER_PASSWORD: appuser123
+      # APP_USER: appuser //El usuario se crea en el script de inicio
+      # APP_USER_PASSWORD: appuser123
     volumes:
       - oracle-data:/opt/oracle/oradata
       - ./containersconfig/scripts/oracle:/oracle
