@@ -152,3 +152,10 @@ SELECT e.id AS id_expediente, e.fecha_contratacion AS fecha_contratacion_expedie
 FROM expedientes e, fondos f, ordenes o
 WHERE e.id = o.id_expediente
 AND f.id = o.id_fondo;
+
+CREATE OR REPLACE VIEW VW_EXPEDIENTES
+AS
+SELECT
+    ID, FECHA_CONTRATACION, TITULAR, NUMERO_EXPEDIENTE, CHGMARKER, ID AS CHGINC
+FROM
+    EXPEDIENTES;

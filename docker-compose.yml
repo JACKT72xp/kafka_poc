@@ -120,8 +120,8 @@ services:
       KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
       VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
       PLUGIN_PATH: /kafka/connect
-      CLASSPATH: /kafka/connect/debezium-connector-db2/db2jcc4.jar
-      JAVA_TOOL_OPTIONS: "-Djava.library.path=/kafka/connect/debezium-connector-db2"
+      CLASSPATH: /kafka/connect/debezium-connector-db2/db2jcc4.jar:/kafka/connect/debezium-connector-oracle/ojdbc8.jar
+      JAVA_TOOL_OPTIONS: "-Djava.library.path=/kafka/connect/debezium-connector-db2:kafka/connect/debezium-connector-oracle"
     volumes:
       - ./containersconfig/plugins:/kafka/connect
     healthcheck:
@@ -168,6 +168,8 @@ services:
       KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
       KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
   oracle:
+    networks:
+      - my_network
     image: gvenzl/oracle-xe:latest
     container_name: oracle
     platform: linux/amd64
