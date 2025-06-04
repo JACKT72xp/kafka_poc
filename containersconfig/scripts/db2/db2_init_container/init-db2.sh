@@ -3,17 +3,6 @@
 
 check_db_empty() {
   su - db2inst1 -c "db2 connect to TESTDB && db2 -x \"SELECT TABNAME FROM SYSCAT.TABLES WHERE TABSCHEMA = 'DB2INST1' AND TYPE = 'T'\""
-
-}
-
-check_tables_exist() {
-    local tables=("EXPEDIENTES" "ORDENES" "FONDOS" "TRASPASOS" "RETENCIONES" "CONTRATOS" "BORRADOS") 
-    for table in "${tables[@]}"; do
-        if ! su - db2inst1 -c "db2 connect to $DBNAME && db2 -x \"SELECT TABNAME FROM SYSCAT.TABLES WHERE TABNAME = '$table'\"" | grep -q "$table"; then
-            return 1  
-        fi
-    done
-    return 0  
 }
 
 # Evaluar si la estructura ya existía antes

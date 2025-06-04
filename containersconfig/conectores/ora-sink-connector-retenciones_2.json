@@ -3,7 +3,7 @@
   "config": {
     "connector.class": "io.confluent.connect.jdbc.JdbcSinkConnector",
     "tasks.max": 1,
-    "topics": "cai-db2-complex-test-RETENCIONES_2",
+    "topics": "cai-db2-test-VW_RETENCIONES_2",
     "connection.url": "jdbc:oracle:thin:@oracle:1521/XEPDB1",
     "connection.user": "appuser",
     "connection.password": "appuser123",
@@ -14,7 +14,7 @@
     "insert.mode": "UPSERT",
     "pk.mode": "record_key",
     "pk.fields": "ID",
-    "table.name.format": "APPUSER.RETENCIONES_2"
+    "table.name.format": "RETENCIONES_2"
   }
 }
 
