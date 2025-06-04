@@ -8,40 +8,26 @@ CREATE TABLE expedientes (
     CHGINC NUMBER NOT NULL
 );
 
-CREATE OR REPLACE TRIGGER trg_update_expedientes
-BEFORE UPDATE OF fecha_contratacion, titular, numero_expediente ON expedientes
-FOR EACH ROW
-BEGIN
-    :NEW.CHGMARKER := CURRENT_TIMESTAMP;
-END;
-/
 -- Table: fondos
 CREATE TABLE fondos (
     id NUMBER PRIMARY KEY,
-    nombre_fondo VARCHAR2(255) NOT NULL,
-    tipo_fondo VARCHAR2(50) NOT NULL,
-    fecha_creacion_fondo DATE NOT NULL,
+    nombre VARCHAR2(255) NOT NULL,
+    tipo VARCHAR2(50) NOT NULL,
+    fecha_creacion DATE NOT NULL,
     volumen_activos NUMBER(20,2) NOT NULL,
     CHGMARKER TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     CHGINC NUMBER NOT NULL
 );
 
-CREATE OR REPLACE TRIGGER trg_update_fondos
-BEFORE UPDATE OF nombre_fondo, tipo_fondo, fecha_creacion_fondo, volumen_activos ON fondos
-FOR EACH ROW
-BEGIN
-    :NEW.CHGMARKER := CURRENT_TIMESTAMP;
-END;
-/
 -- Table: ordenes
 CREATE TABLE ordenes (
-    id NUMBER PRIMARY KEY,
+    id_orden NUMBER PRIMARY KEY,
     id_expediente NUMBER NOT NULL,
     fecha_orden DATE NOT NULL,
-    estado VARCHAR2(50) NOT NULL,
+    estado_orden VARCHAR2(50) NOT NULL,
     tipo_orden VARCHAR2(10) CHECK (tipo_orden IN ('compra', 'venta')),
-    fecha_ejecucion DATE NOT NULL,
-    importe NUMBER(20,2) NOT NULL,
+    fecha_ejecucion_orden DATE NOT NULL,
+    importe_orden NUMBER(20,2) NOT NULL,
     id_fondo NUMBER NOT NULL,
     CHGMARKER TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     CHGINC NUMBER NOT NULL,
@@ -49,13 +35,6 @@ CREATE TABLE ordenes (
     CONSTRAINT fk_ordenes_fondo FOREIGN KEY (id_fondo) REFERENCES fondos(id) ON DELETE CASCADE
 );
 
-CREATE OR REPLACE TRIGGER trg_update_ordenes
-BEFORE UPDATE OF id_expediente, fecha_orden, estado, tipo_orden, fecha_ejecucion, importe, id_fondo ON ordenes
-FOR EACH ROW
-BEGIN
-    :NEW.CHGMARKER := CURRENT_TIMESTAMP;
-END;
-/
 -- Table: traspasos
 CREATE TABLE traspasos (
     id NUMBER PRIMARY KEY,
@@ -71,53 +50,29 @@ CREATE TABLE traspasos (
     CONSTRAINT fk_traspasos_destino FOREIGN KEY (id_fondo_destino) REFERENCES fondos(id) ON DELETE CASCADE
 );
 
-CREATE OR REPLACE TRIGGER trg_update_traspasos
-BEFORE UPDATE OF id_expediente, id_fondo_origen, id_fondo_destino, fecha, importe ON traspasos
-FOR EACH ROW
-BEGIN
-    :NEW.CHGMARKER := CURRENT_TIMESTAMP;
-END;
-/
 -- Table: retenciones
-CREATE TABLE retenciones (
+CREATE TABLE retenciones_1 (
     id NUMBER PRIMARY KEY,
-    id_expediente NUMBER NOT NULL,
+    id_orden NUMBER NOT NULL,
     fecha_retencion DATE NOT NULL,
     tipo VARCHAR2(50) NOT NULL,
     importe_retencion NUMBER(20,2) NOT NULL,
     CHGMARKER TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     CHGINC NUMBER NOT NULL,
-    CONSTRAINT fk_retenciones_expediente FOREIGN KEY (id_expediente) REFERENCES expedientes(id) ON DELETE CASCADE
+    CONSTRAINT fk_retenciones_ordenes FOREIGN KEY (id_orden) REFERENCES ordenes(id_orden) ON DELETE CASCADE
 );
 
-CREATE OR REPLACE TRIGGER trg_update_retenciones
-BEFORE UPDATE OF id_expediente, fecha_retencion, tipo, importe_retencion ON retenciones
-FOR EACH ROW
-BEGIN
-    :NEW.CHGMARKER := CURRENT_TIMESTAMP;
-END;
-/
-
-INSERT INTO expedientes (ID, fecha_contratacion, titular, numero_expediente, CHGINC)
-VALUES (1, TO_DATE('2025-01-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS'), 'Juan Pérez', 'EXP-001', 1);
-
-INSERT INTO fondos (id, nombre_fondo, tipo_fondo, fecha_creacion_fondo, volumen_activos, CHGINC)
-VALUES
-(1, 'Fondo A', 'Equity', TO_DATE('2020-01-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS'), 5000000.00, 1);
---('Fondo B', 'Bond', TO_DATE('2019-01-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS'), 3000000.00);
-
-INSERT INTO fondos (ID, nombre_fondo, tipo_fondo, fecha_creacion_fondo, volumen_activos, CHGINC)
-VALUES
-(2, 'Fondo B', 'Bond', TO_DATE('2019-01-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS'), 3000000.00, 2);
-
-INSERT INTO ordenes (ID, id_expediente, fecha_orden, estado, tipo_orden, fecha_ejecucion, importe, id_fondo, CHGINC)
-VALUES (1, 1, TO_DATE('2025-02-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS'), 'Pendiente', 'compra', TO_DATE('2025-02-10', 'YYYY-MM-DD'), 100000.00, 1, 1);
-
-INSERT INTO traspasos (ID, id_expediente, id_fondo_origen, id_fondo_destino, fecha, importe, CHGINC)
-VALUES (1, 1, 1, 2, TO_DATE('2025-02-15 00:00:00', 'YYYY-MM-DD HH24:MI:SS'), 50000.00, 1);
-
-INSERT INTO retenciones (ID, id_expediente, fecha_retencion, tipo, importe_retencion, CHGINC)
-VALUES (1, 1, TO_DATE('2025-03-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS'), 'Impuesto', 2000.00, 1);
+-- Table: retenciones
+CREATE TABLE retenciones_2 (
+    id NUMBER PRIMARY KEY,
+    id_traspaso NUMBER NOT NULL,
+    fecha_retencion DATE NOT NULL,
+    tipo VARCHAR2(50) NOT NULL,
+    importe_retencion NUMBER(20,2) NOT NULL,
+    CHGMARKER TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    CHGINC NUMBER NOT NULL,
+    CONSTRAINT fk_retenciones_traspasos FOREIGN KEY (id_traspaso) REFERENCES traspasos(id) ON DELETE CASCADE
+);
 
 -- Table: contratos_parte_a
 CREATE TABLE contratos_parte_a (
@@ -144,8 +99,52 @@ CREATE TABLE contratos_parte_b (
 );
 
 
-INSERT INTO contratos_parte_a (id, id_parte_a, fecha_inicio_contrato, fecha_vencimiento_contrato, condiciones_contrato, terminos_pago, CHGINC)
-VALUES (1, 10, TO_DATE('2020-01-01', 'YYYY-MM-DD'), TO_DATE('2024-01-01', 'YYYY-MM-DD'), 'CONDICIONES CONTRATO 10, 20 PARTE A', 'TERMINOS PAGO 10, 20 PARTE A', 1);
 
-INSERT INTO contratos_parte_b (id, id_parte_b, fecha_inicio_contrato, fecha_vencimiento_contrato, condiciones_contrato, terminos_pago, CHGINC)
-VALUES (1, 20, TO_DATE('2020-01-01', 'YYYY-MM-DD'), TO_DATE('2024-01-01', 'YYYY-MM-DD'), 'CONDICIONES CONTRATO 10, 20 PARTE B', 'TERMINOS PAGO 10, 20 PARTE B', 1);
+CREATE TABLE PROCESO_BANCARIO (
+    ID_ESTADO VARCHAR2(20) PRIMARY KEY,
+    ID NUMBER,
+    ESTADO VARCHAR2(20) NOT NULL, 
+    NOMBRE VARCHAR2(50) NOT NULL,
+    FECHA DATE NOT NULL, 
+    FECHA_ULTIMA_MODIFICACION TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    CHGINC NUMBER
+);
+
+
+
+
+
+
+CREATE OR REPLACE TRIGGER trg_update_expedientes
+BEFORE UPDATE OF fecha_contratacion, titular, numero_expediente ON expedientes
+FOR EACH ROW
+BEGIN
+    :NEW.CHGMARKER := CURRENT_TIMESTAMP;
+END;
+/
+
+
+CREATE OR REPLACE TRIGGER trg_update_fondos
+BEFORE UPDATE OF nombre, tipo, fecha_creacion, volumen_activos ON fondos
+FOR EACH ROW
+BEGIN
+    :NEW.CHGMARKER := CURRENT_TIMESTAMP;
+END;
+/
+
+CREATE OR REPLACE TRIGGER trg_update_ordenes
+BEFORE UPDATE OF id_expediente, fecha_orden, estado, tipo_orden, fecha_ejecucion, importe_orden, id_fondo ON ordenes
+FOR EACH ROW
+BEGIN
+    :NEW.CHGMARKER := CURRENT_TIMESTAMP;
+END;
+/
+
+
+CREATE OR REPLACE TRIGGER trg_update_traspasos
+BEFORE UPDATE OF id_expediente, id_fondo_origen, id_fondo_destino, fecha, importe ON traspasos
+FOR EACH ROW
+BEGIN
+    :NEW.CHGMARKER := CURRENT_TIMESTAMP;
+END;
+/
