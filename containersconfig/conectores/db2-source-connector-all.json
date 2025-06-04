@@ -6,7 +6,7 @@
       "connection.user": "db2inst1",
       "connection.password": "db2inst1-pwd",
       "dialect.name": "Db2DatabaseDialect",
-      "table.whitelist": "VW_EXPEDIENTES,VW_FONDOS,VW_TRASPASOS,VW_RETENCIONES2",
+      "table.whitelist": "VW_EXPEDIENTES,VW_FONDOS,VW_TRASPASOS,VW_RETENCIONES_2",
       "table.types": "VIEW",
       "mode": "timestamp+incrementing",
       "timestamp.column.name": "CHGMARKER",
