@@ -1,0 +1,22 @@
+{
+    "name": "db2-source-connector-contratos_parte_b",
+    "config": {
+      "connector.class": "io.confluent.connect.jdbc.JdbcSourceConnector",
+      "connection.url": "jdbc:db2://db2:50000/TESTDB",
+      "connection.user": "db2inst1",
+      "connection.password": "db2inst1-pwd",
+      "dialect.name": "Db2DatabaseDialect",
+      "table.whitelist": "VW_CONTRATOS_PARTE_B",
+      "table.types": "VIEW",
+      "mode": "timestamp+incrementing",
+      "timestamp.column.name": "CHGMARKER",
+      "incrementing.column.name": "CHGINC",
+      "topic.prefix": "cai-db2-test-",
+      "poll.interval.ms": 5000,
+      "tasks.max": "1",
+      "decimal.format": "NUMERIC",
+      "transforms": "valueToKey",
+      "transforms.valueToKey.type": "org.apache.kafka.connect.transforms.ValueToKey",
+      "transforms.valueToKey.fields": "ID"   
+    }  
+}

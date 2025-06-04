@@ -1,0 +1,19 @@
+{
+  "name": "ora-sink-connector-proceso-bancario",
+  "config": {
+    "connector.class": "io.confluent.connect.jdbc.JdbcSinkConnector",
+    "tasks.max": 1,
+    "topics": "cai-db2-test-PROCESO_BANCARIO_ALL_STATUS",
+    "connection.url": "jdbc:oracle:thin:@oracle:1521/XEPDB1",
+    "connection.user": "appuser",
+    "connection.password": "appuser123",
+    "dialect.name": "OracleDatabaseDialect",
+    "auto.create": false,
+    "insert.mode": "UPSERT",
+    "pk.mode": "record_key",
+    "pk.fields": "ID_ESTADO",
+    "table.name.format": "PROCESO_BANCARIO",
+    "errors.log.enable": true,
+    "errors.log.include.messages": true
+  }
+}
